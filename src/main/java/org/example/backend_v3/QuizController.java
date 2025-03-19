@@ -18,6 +18,11 @@ public class QuizController {
         return loadQuestions();
     }
 
+    @GetMapping("/test")
+    public String test() {
+        return "test";
+    }
+
     private List<Question> loadQuestions() {
         List<Question> questions = new ArrayList<>();
         try (InputStream is = new ClassPathResource("test.docx").getInputStream();
