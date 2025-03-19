@@ -1,8 +1,10 @@
 package org.example.backend_v3;
 
+//import org.example.backend_v3.Question; // Import qilish kerak
+import org.springframework.core.io.ClassPathResource;
 import org.apache.poi.xwpf.usermodel.*;
-import org.springframework.web.bind.annotation.*;
 
+import org.springframework.web.bind.annotation.*;
 import java.io.*;
 import java.util.*;
 
@@ -13,13 +15,13 @@ public class QuizController {
 
     @GetMapping("/questions")
     public List<Question> getQuestions() {
-        return loadQuestions("test.docx");
+        return loadQuestions();
     }
 
-    private List<Question> loadQuestions(String filePath) {
+    private List<Question> loadQuestions() {
         List<Question> questions = new ArrayList<>();
-        try (FileInputStream fis = new FileInputStream(filePath);
-             XWPFDocument document = new XWPFDocument(fis)) {
+        try (InputStream is = new ClassPathResource("test.docx").getInputStream();
+             XWPFDocument document = new XWPFDocument(is)) {
 
             List<String> lines = new ArrayList<>();
             for (XWPFParagraph paragraph : document.getParagraphs()) {
@@ -34,15 +36,15 @@ public class QuizController {
             String correctAnswer = "";
 
             for (String line : lines) {
-                if (line.matches("^[*]?[A-D]\\).*")) { // Variant boshi *A) yoki A)
-                    if (line.startsWith("*")) { // *A) bo‘lsa
-                        correctAnswer = line.substring(1, 2); // A yoki B yoki C yoki D
-                        options.add(line.substring(1).trim()); // * ni olib tashlaymiz
+                if (line.matches("^[*]?[A-D]\\).*")) {
+                    if (line.startsWith("*")) {
+                        correctAnswer = line.substring(1, 2);
+                        options.add(line.substring(1).trim());
                     } else {
                         options.add(line.trim());
                     }
                 } else {
-                    if (!questionText.isEmpty() && !options.isEmpty()) {
+                    if (!questionText.isEmpty() && options.size() >= 3) {
                         questions.add(new Question(questionText, options, correctAnswer));
                     }
                     questionText = line;
@@ -51,7 +53,7 @@ public class QuizController {
                 }
             }
 
-            if (!questionText.isEmpty() && !options.isEmpty()) {
+            if (!questionText.isEmpty() && options.size() >= 3) {
                 questions.add(new Question(questionText, options, correctAnswer));
             }
 
@@ -59,29 +61,5 @@ public class QuizController {
             e.printStackTrace();
         }
         return questions;
-    }
-}
-
-class Question {
-    private final String questionText;
-    private final List<String> options;
-    private final String correctOption;
-
-    public Question(String questionText, List<String> options, String correctOption) {
-        this.questionText = questionText;
-        this.options = options;
-        this.correctOption = correctOption;
-    }
-
-    public String getQuestionText() {
-        return questionText;
-    }
-
-    public List<String> getOptions() {
-        return options;
-    }
-
-    public String getCorrectOption() {
-        return correctOption;
     }
 }
